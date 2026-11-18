@@ -1,0 +1,67 @@
+name: fetch-salla-abaya-images
+on:
+  push:
+    branches: [salla-abaya-images]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download images from Drive
+        run: |
+          mkdir -p salla-abayas
+          cat > list.txt <<'EOL'
+01-1 1pk_FdXkGlzXqkpifJyXWhHcXbrIXuyud
+01-2 1NT1pvBcyOg85s4__Dwv56PloynGe5uRU
+01-3 1BOw9k47yGEri9f1uqUFofWEiXHiBNRzH
+02-1 1N67UtzhROsnLEkW_Ezc3Mx4oCoOfdPBw
+02-2 1WFGiUZFLqqw2PQCuHDFxExiUCvDtIoy9
+02-3 1jmGYNBqbjAjPN9PiWb_JS2Qg03io2_QU
+02-4 1lydWqKWTmGchUuiC0tX8DQpe-nk0RId4
+03-1 1oNPGobqE87xQMBLUOIWr9QCA1SD7Gqr2
+03-2 1E6JSDgUWa2qGamBfzhez-qa4FJgPGrnu
+03-3 1vRaEQ_3VxqZjXfqBPRATANYhjk-JniBb
+03-4 1cnrnJM-w4tq8coIoehcPtkVHWV2DkJ9n
+04-1 1T4cCDFxLk0rDPi3-KNtCqhWRvRMB8AN4
+04-2 1BNL_sDKCx0OF0aX_sv9DLbKm6aqRC9ui
+04-3 1mEfOEvJ7LmoFYaZdh941wW_NRWkHnVNY
+05-1 1d7J72pVPflIBzw3qUURby-dvcflMeRcv
+05-2 1pFfPCIngniOMD_CQwp2uVyRHykMjlfoK
+05-3 1GyYyK0Taf8xN_qBqARwqhFdqsOY5ienY
+06-1 1361to_rK3dCCRqz3nr6L8oUE5kOIrGDQ
+06-2 1hYgf3cdBR5B1p_14uF3KKjU1Mftonx0G
+06-3 1AziCMNt4SkqfBrOPloCB48ecrhlb3Tfp
+07-1 1AEnL3vyz1c9m7yVgpaKgsDLquuTWOW8z
+07-2 1j4OwrWQrHQud8yIsF9Sdl2d8qj09fMei
+07-3 1BSysPKyNEZlq7v0rrwLwWybOx8h7hXvz
+08-1 1ehpkW69NYujvvxTnYkVbs2IDGWGrzsim
+08-2 1y8GAG6Kc6QPmT-izebpMxKhTQAAei3D9
+08-3 1MxIFwcAvdfJG44PPwrRP0wyFsxFkGdqV
+09-1 10D-e8hPKEbxczUs_Ki6HQDAy2LtF3m0I
+09-2 13YxG0R2iu_S-XfVEEcnG56Wqk_zF6lRN
+09-3 1olMZ8LG7ME14Q3vZigrifEmBveW6uzze
+10-1 1qZxyXA3BDCic3BVhTREpQhMuJ_csRGQv
+10-2 1uUCDRrsayq7tzKWcmnS_29bv5nY3Ola5
+10-3 19NgnLQ51DdBxujaIOWupST9CrLMq16eb
+11-1 1AUvPkEAEDYpNf0jmCqCIeWklrSPscseb
+11-2 1bIdb3Wo6e2Q1JZBMYcaib2-3DZbu_43o
+11-3 1tdldBsYzkTJKtL2-pjp-ZaLY5es5d3su
+EOL
+          fail=0
+          while read -r name id; do
+            out="salla-abayas/abaya-$name.jpg"
+            curl -sSL --retry 3 -o "$out" "https://drive.google.com/uc?export=download&id=$id"
+            if ! file "$out" | grep -qi 'image'; then echo "FAILED $name $id"; rm -f "$out"; fail=1; fi
+          done < list.txt
+          rm list.txt
+          ls -la salla-abayas
+      - name: Commit images
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add salla-abayas
+          git commit -m "Add Salla abaya product images" || echo "nothing to commit"
+          git push
